@@ -17,6 +17,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ElectionActivity"
+            android:label="@string/title_activity_election"
+            android:parentActivityName=".HomeActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="fr.micklewright.smsvote.HomeActivity" />
+        </activity>
     </application>
 
 </manifest>

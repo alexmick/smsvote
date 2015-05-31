@@ -3,4 +3,5 @@
 
     <string name="action_settings">Paramètres</string>
     <string name="action_new">Nouveau</string>
+    <string name="title_activity_election">ElectionActivity</string>
 </resources>
