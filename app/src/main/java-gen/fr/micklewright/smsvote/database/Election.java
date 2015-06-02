@@ -32,10 +32,10 @@ public class Election {
     private List<Participation> participations;
 
     // KEEP FIELDS - put your custom fields here
-    public final int STAGE_INITIAL = 0;
-    public final int STAGE_REGISTRATION = 1;
-    public final int STAGE_VOTE = 2;
-    public final int STAGE_FINISHED = 3;
+    public static final int STAGE_INITIAL = 0;
+    public static final int STAGE_REGISTRATION = 1;
+    public static final int STAGE_VOTE = 2;
+    public static final int STAGE_FINISHED = 3;
     // KEEP FIELDS END
 
     public Election() {
