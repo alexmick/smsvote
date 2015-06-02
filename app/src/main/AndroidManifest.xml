@@ -18,8 +18,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ElectionActivity"
-            android:label="@string/title_activity_election"
+            android:name=".ElectionEditActivity"
+            android:label="@string/activity_election_title"
             android:parentActivityName=".HomeActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
