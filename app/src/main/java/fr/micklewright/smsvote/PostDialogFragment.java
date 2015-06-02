@@ -3,26 +3,21 @@ package fr.micklewright.smsvote;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
-import android.net.Uri;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.NumberPicker;
 
-import fr.micklewright.smsvote.database.Post;
 
-
-public class PostFragment extends DialogFragment {
+public class PostDialogFragment extends DialogFragment {
 
     private PostDialogListener mListener;
 
-    public PostFragment() {
+    public PostDialogFragment() {
         // Required empty public constructor
     }
 
@@ -46,7 +41,7 @@ public class PostFragment extends DialogFragment {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         String name = ((EditText) view.findViewById(R.id.dialog_post_name)).getText().toString();
                         int places = ((NumberPicker) view.findViewById(R.id.dialog_post_places)).getValue();
-                        mListener.onDialogPositiveClick(PostFragment.this, name, places);
+                        mListener.onPostDialogPositiveClick(PostDialogFragment.this, name, places);
                     }
                 })
                 .setNegativeButton(R.string.cancel, null);
@@ -72,7 +67,7 @@ public class PostFragment extends DialogFragment {
     }
 
     public interface PostDialogListener {
-        public void onDialogPositiveClick(DialogFragment dialog, String name, int places);
+        public void onPostDialogPositiveClick(DialogFragment dialog, String name, int places);
     }
 
 }

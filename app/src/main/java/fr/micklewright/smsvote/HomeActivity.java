@@ -3,6 +3,7 @@ package fr.micklewright.smsvote;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -16,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -24,7 +26,7 @@ import fr.micklewright.smsvote.database.ElectionDao;
 import fr.micklewright.smsvote.database.Post;
 
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity implements ElectionNameDialog.ElectionNameDialogListener {
 
     ElectionDao electionDao;
     ArrayAdapter<Election> adapter;
@@ -45,7 +47,7 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 Election selected = (Election) adapterView.getItemAtPosition(position);
-                Intent intent = new Intent(getApplicationContext(), ElectionEditActivity.class);
+                Intent intent = new Intent(getApplicationContext(), ElectionActivity.class);
                 intent.putExtra("electionId", selected.getId());
                 startActivity(intent);
             }
@@ -81,14 +83,26 @@ public class HomeActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.home_action_new:
-                Intent intent = new Intent(getApplicationContext(), ElectionEditActivity.class);
-                startActivity(intent);
+                DialogFragment dialog = new ElectionNameDialog();
+                dialog.show(getSupportFragmentManager(), "ElectionNameDialogFragment");
                 return true;
             case R.id.home_action_settings:
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onElectionNameDialogPositiveClick(DialogFragment dialog, String name) {
+        Election election = new Election();
+        election.setName(name);
+        election.setDate(new Date());
+        adapter.add(election);
+        electionDao.insert(election);
+        Intent intent = new Intent(this, ElectionActivity.class);
+        intent.putExtra("electionId", election.getId());
+        startActivity(intent);
     }
 }
 

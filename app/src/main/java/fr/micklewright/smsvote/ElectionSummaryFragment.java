@@ -1,27 +1,25 @@
 package fr.micklewright.smsvote;
 
 import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
+import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 import de.greenrobot.dao.DaoException;
 import fr.micklewright.smsvote.database.Election;
@@ -30,7 +28,7 @@ import fr.micklewright.smsvote.database.Post;
 import fr.micklewright.smsvote.database.PostDao;
 
 
-public class ElectionEditActivity extends AppCompatActivity implements PostFragment.PostDialogListener{
+public class ElectionSummaryFragment extends Fragment{
 
     ElectionDao electionDao;
     PostDao postDao;
@@ -39,40 +37,47 @@ public class ElectionEditActivity extends AppCompatActivity implements PostFragm
     Election election;
 
     PostAdapter adapter;
-    EditText editTextName;
+
+    public ElectionSummaryFragment() {
+    }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_election_edit);
-        editTextName = (EditText) findViewById(R.id.editText_name);
+        setHasOptionsMenu(true);
 
-        electionDao = ((DaoApplication) getApplicationContext()).getDaoSession().getElectionDao();
-        postDao = ((DaoApplication) getApplicationContext()).getDaoSession().getPostDao();
+        electionDao = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession().getElectionDao();
+        postDao = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession().getPostDao();
 
-        Intent intent = getIntent();
+        election = electionDao.load(getArguments().getLong("electionId"));
+
+        election.resetPosts();
         posts = new ArrayList<>();
-        if( intent.hasExtra("electionId")) {
-            election = electionDao.load(intent.getLongExtra("electionId", 0));
-            election.resetPosts();
-            editTextName.setText(election.getName());
-            posts.addAll(election.getPosts());
-        } else {
-            election = new Election();
-            election.setDate(new Date());
-        }
+        posts.addAll(election.getPosts());
+    }
 
-        TextView dateTextView = (TextView) findViewById(R.id.textView_date);
-        dateTextView.setText(new SimpleDateFormat("HH:mm d MMM yyyy", Locale.FRANCE).format(election.getDate()));
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_election_summary, container, false);
 
-        ListView listViewPosts = (ListView) findViewById(R.id.listView_posts);
-        adapter = new PostAdapter(this, posts);
+        Button addButton = (Button) view.findViewById(R.id.button_add_post);
+        addButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                DialogFragment dialog = new PostDialogFragment();
+                dialog.show(getActivity().getSupportFragmentManager(), "PostDialogFragment");
+            }
+        });
+
+        ListView listViewPosts = (ListView) view.findViewById(R.id.listView_posts);
+        adapter = new PostAdapter(getActivity(), posts);
         listViewPosts.setAdapter(adapter);
 
         listViewPosts.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Toast.makeText(ElectionEditActivity.this, getString(R.string.activity_election_click), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), getString(R.string.activity_election_click), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -81,33 +86,20 @@ public class ElectionEditActivity extends AppCompatActivity implements PostFragm
             public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Post post = (Post) adapterView.getItemAtPosition(i);
                 posts.remove(post);
-                try {
-                    ((DaoApplication) getApplicationContext()).getDaoSession().getPostDao()
-                            .delete(post);
-                } catch (DaoException ignored) {
-
-                }
                 adapter.notifyDataSetChanged();
+                post.delete();
                 return true;
             }
         });
+
+        return view;
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(election.getName());
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_election_edit, menu);
-        return true;
-    }
-
-    @Override
-    public void onResume(){
-        super.onResume();
-    }
-
-    public void addPost(View view) {
-        DialogFragment dialog = new PostFragment();
-        dialog.show(getSupportFragmentManager(), "PostDialogFragment");
+        inflater.inflate(R.menu.menu_election_summary, menu);
     }
 
     @Override
@@ -118,30 +110,27 @@ public class ElectionEditActivity extends AppCompatActivity implements PostFragm
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_save) {
-            if (!editTextName.getText().toString().isEmpty()) {
-                election.setName(editTextName.getText().toString());
-                electionDao.insertOrReplace(election);
-                for (Post post : posts){
-                    post.setElection(election);
-                }
-                postDao.insertOrReplaceInTx(posts);
-            }
-            finish();
+        if (id == R.id.election_action_rename) {
+            DialogFragment dialog = new ElectionNameDialog();
+            dialog.show(getActivity().getSupportFragmentManager(), "ElectionNameDialogFragment");
+            Bundle args = new Bundle();
+            args.putString("name", election.getName());
+            dialog.setArguments(args);
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onDialogPositiveClick(DialogFragment dialog, String name, int places) {
+    public void createPost(String name, int places) {
         Post post = new Post();
         post.setName(name);
         post.setPlaces(places);
+        post.setElection(election);
         posts.add(post);
         adapter.notifyDataSetChanged();
 
+        postDao.insert(post);
     }
 }
 
@@ -170,3 +159,4 @@ class PostAdapter extends ArrayAdapter<Post> {
         return convertView;
     }
 }
+
