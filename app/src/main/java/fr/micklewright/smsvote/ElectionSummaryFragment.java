@@ -21,7 +21,6 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.greenrobot.dao.DaoException;
 import fr.micklewright.smsvote.database.Election;
 import fr.micklewright.smsvote.database.ElectionDao;
 import fr.micklewright.smsvote.database.Post;
@@ -97,6 +96,7 @@ public class ElectionSummaryFragment extends Fragment{
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        //noinspection ConstantConditions
         ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(election.getName());
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.menu_election_summary, menu);

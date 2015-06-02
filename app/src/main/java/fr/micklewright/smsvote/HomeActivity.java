@@ -98,6 +98,7 @@ public class HomeActivity extends AppCompatActivity implements ElectionNameDialo
         Election election = new Election();
         election.setName(name);
         election.setDate(new Date());
+        election.setStage(Election.STAGE_INITIAL);
         adapter.add(election);
         electionDao.insert(election);
         Intent intent = new Intent(this, ElectionActivity.class);

@@ -40,6 +40,7 @@
         android:layout_height="wrap_content"
         android:text="@string/activity_election_start"
         android:layout_alignParentBottom="true"
-        android:id="@+id/button" />
+        android:id="@+id/button"
+        android:onClick="clickStartButton"/>
 
 </RelativeLayout>
