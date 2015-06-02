@@ -9,7 +9,8 @@ import de.greenrobot.daogenerator.ToMany;
 public class MyDaoGenerator {
 
     public static void main(String args[]) throws Exception {
-        Schema schema = new Schema(1, "smsvote");
+        Schema schema = new Schema(2, "fr.micklewright.smsvote.database");
+        schema.enableKeepSectionsByDefault();
 
         /**
          * Election core entity
@@ -19,6 +20,8 @@ public class MyDaoGenerator {
         election.addStringProperty("name").notNull();
         election.addStringProperty("description");
         election.addDateProperty("date").notNull();
+        election.addIntProperty("stage");
+        election.addIntProperty("registrationCode");
 
         /**
          * Post core entity
@@ -33,6 +36,7 @@ public class MyDaoGenerator {
          */
         Entity application = schema.addEntity("Application");
         application.addIdProperty();
+        application.addIntProperty("candidateNumber");
 
         /**
          * Contact core entity
