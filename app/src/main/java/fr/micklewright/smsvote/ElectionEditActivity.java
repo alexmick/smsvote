@@ -10,10 +10,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -66,6 +68,29 @@ public class ElectionEditActivity extends AppCompatActivity implements PostFragm
         ListView listViewPosts = (ListView) findViewById(R.id.listView_posts);
         adapter = new PostAdapter(this, posts);
         listViewPosts.setAdapter(adapter);
+
+        listViewPosts.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Toast.makeText(ElectionEditActivity.this, getString(R.string.activity_election_click), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        listViewPosts.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Post post = (Post) adapterView.getItemAtPosition(i);
+                posts.remove(post);
+                try {
+                    ((DaoApplication) getApplicationContext()).getDaoSession().getPostDao()
+                            .delete(post);
+                } catch (DaoException ignored) {
+
+                }
+                adapter.notifyDataSetChanged();
+                return true;
+            }
+        });
     }
 
     @Override
@@ -141,21 +166,6 @@ class PostAdapter extends ArrayAdapter<Post> {
                 .setText(post.getName());
         ((TextView) convertView.findViewById(android.R.id.text2))
                 .setText(String.valueOf(post.getPlaces()));
-
-        convertView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                posts.remove(position);
-                try {
-                    ((DaoApplication) context.getApplicationContext()).getDaoSession().getPostDao()
-                            .delete(post);
-                } catch (DaoException ignored) {
-
-                }
-                notifyDataSetChanged();
-                return true;
-            }
-        });
 
         return convertView;
     }

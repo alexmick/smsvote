@@ -13,6 +13,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.Locale;
 
 import fr.micklewright.smsvote.database.Election;
 import fr.micklewright.smsvote.database.ElectionDao;
+import fr.micklewright.smsvote.database.Post;
 
 
 public class HomeActivity extends AppCompatActivity {
@@ -46,6 +48,16 @@ public class HomeActivity extends AppCompatActivity {
                 Intent intent = new Intent(getApplicationContext(), ElectionEditActivity.class);
                 intent.putExtra("electionId", selected.getId());
                 startActivity(intent);
+            }
+        });
+
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Election toRemove = (Election) adapterView.getItemAtPosition(i);
+                adapter.remove(toRemove);
+                toRemove.delete();
+                return true;
             }
         });
     }
@@ -100,6 +112,7 @@ class ElectionAdapter extends ArrayAdapter<Election> {
         ((TextView) convertView.findViewById(android.R.id.text1)).setText(election.getName());
         ((TextView) convertView.findViewById(android.R.id.text2))
                 .setText(new SimpleDateFormat("d MMM yyyy, HH:mm", Locale.FRANCE).format(election.getDate()));
+
         return convertView;
     }
 }

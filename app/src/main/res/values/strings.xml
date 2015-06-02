@@ -11,6 +11,7 @@
     <string name="activity_election_name">Nom de l\'évènement</string>
     <string name="activity_election_posts">Postes</string>
     <string name="activity_election_add">Ajouter</string>
+    <string name="activity_election_click">Rester appuyé pour supprimer</string>
 
     <!-- New post dialog -->
     <string name="dialog_post_title">Nouveau poste</string>
