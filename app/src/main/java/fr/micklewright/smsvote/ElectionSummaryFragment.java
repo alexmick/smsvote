@@ -132,31 +132,33 @@ public class ElectionSummaryFragment extends Fragment{
 
         postDao.insert(post);
     }
-}
 
-class PostAdapter extends ArrayAdapter<Post> {
-    List<Post> posts;
-    Context context;
+    private class PostAdapter extends ArrayAdapter<Post> {
+        List<Post> posts;
+        Context context;
 
-    public PostAdapter(Context context, List<Post> posts){
-        super(context, android.R.layout.simple_list_item_2, posts);
-        this.context = context;
-        this.posts = posts;
-    }
-
-    @Override
-    public View getView(final int position, View convertView, ViewGroup parent){
-        if(convertView == null){
-            LayoutInflater mLayoutInflater = LayoutInflater.from(context);
-            convertView = mLayoutInflater.inflate(android.R.layout.simple_list_item_2, null);
+        public PostAdapter(Context context, List<Post> posts){
+            super(context, android.R.layout.simple_list_item_2, posts);
+            this.context = context;
+            this.posts = posts;
         }
-        final Post post = posts.get(position);
-        ((TextView) convertView.findViewById(android.R.id.text1))
-                .setText(post.getName());
-        ((TextView) convertView.findViewById(android.R.id.text2))
-                .setText(String.valueOf(post.getPlaces()));
 
-        return convertView;
+        @Override
+        public View getView(final int position, View convertView, ViewGroup parent){
+            if(convertView == null){
+                LayoutInflater mLayoutInflater = LayoutInflater.from(context);
+                convertView = mLayoutInflater.inflate(android.R.layout.simple_list_item_2, null);
+            }
+            final Post post = posts.get(position);
+            ((TextView) convertView.findViewById(android.R.id.text1))
+                    .setText(post.getName());
+            ((TextView) convertView.findViewById(android.R.id.text2))
+                    .setText(String.valueOf(post.getPlaces()));
+
+            return convertView;
+        }
     }
 }
+
+
 

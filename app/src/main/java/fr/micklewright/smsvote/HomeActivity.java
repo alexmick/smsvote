@@ -107,29 +107,30 @@ public class HomeActivity extends AppCompatActivity implements ElectionNameDialo
         intent.putExtra("electionId", election.getId());
         startActivity(intent);
     }
-}
 
-class ElectionAdapter extends ArrayAdapter<Election> {
-    List<Election> elections;
-    Context context;
+    private class ElectionAdapter extends ArrayAdapter<Election> {
+        List<Election> elections;
+        Context context;
 
-    public ElectionAdapter(Context context, List<Election> elections){
-        super(context, android.R.layout.simple_list_item_2, elections);
-        this.context = context;
-        this.elections = elections;
-    }
-
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent){
-        if(convertView == null){
-            LayoutInflater mLayoutInflater = LayoutInflater.from(context);
-            convertView = mLayoutInflater.inflate(android.R.layout.simple_list_item_2, null);
+        public ElectionAdapter(Context context, List<Election> elections){
+            super(context, android.R.layout.simple_list_item_2, elections);
+            this.context = context;
+            this.elections = elections;
         }
-        Election election = elections.get(position);
-        ((TextView) convertView.findViewById(android.R.id.text1)).setText(election.getName());
-        ((TextView) convertView.findViewById(android.R.id.text2))
-                .setText(new SimpleDateFormat("d MMM yyyy, HH:mm", Locale.FRANCE).format(election.getDate()));
 
-        return convertView;
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent){
+            if(convertView == null){
+                LayoutInflater mLayoutInflater = LayoutInflater.from(context);
+                convertView = mLayoutInflater.inflate(android.R.layout.simple_list_item_2, null);
+            }
+            Election election = elections.get(position);
+            ((TextView) convertView.findViewById(android.R.id.text1)).setText(election.getName());
+            ((TextView) convertView.findViewById(android.R.id.text2))
+                    .setText(new SimpleDateFormat("d MMM yyyy, HH:mm", Locale.FRANCE).format(election.getDate()));
+
+            return convertView;
+        }
     }
+
 }

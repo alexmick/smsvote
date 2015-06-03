@@ -140,30 +140,29 @@ public class RegistrationFragment extends Fragment {
                         .replace("#", String.valueOf(i)));
     }
 
-}
+    private class ContactAdapter extends ArrayAdapter<Contact> {
+        List<Contact> contacts;
+        Context context;
 
-class ContactAdapter extends ArrayAdapter<Contact> {
-    List<Contact> contacts;
-    Context context;
-
-    public ContactAdapter(Context context, List<Contact> contacts){
-        super(context, android.R.layout.simple_list_item_2, contacts);
-        this.context = context;
-        this.contacts = contacts;
-    }
-
-    @Override
-    public View getView(final int position, View convertView, ViewGroup parent){
-        if(convertView == null){
-            LayoutInflater mLayoutInflater = LayoutInflater.from(context);
-            convertView = mLayoutInflater.inflate(android.R.layout.simple_list_item_2, null);
+        public ContactAdapter(Context context, List<Contact> contacts){
+            super(context, android.R.layout.simple_list_item_2, contacts);
+            this.context = context;
+            this.contacts = contacts;
         }
-        final Contact contact = contacts.get(position);
-        ((TextView) convertView.findViewById(android.R.id.text1))
-                .setText(contact.getName());
-        ((TextView) convertView.findViewById(android.R.id.text2))
-                .setText(String.valueOf(contact.getNumber()));
 
-        return convertView;
+        @Override
+        public View getView(final int position, View convertView, ViewGroup parent){
+            if(convertView == null){
+                LayoutInflater mLayoutInflater = LayoutInflater.from(context);
+                convertView = mLayoutInflater.inflate(android.R.layout.simple_list_item_2, null);
+            }
+            final Contact contact = contacts.get(position);
+            ((TextView) convertView.findViewById(android.R.id.text1))
+                    .setText(contact.getName());
+            ((TextView) convertView.findViewById(android.R.id.text2))
+                    .setText(String.valueOf(contact.getNumber()));
+
+            return convertView;
+        }
     }
 }

@@ -152,44 +152,46 @@ public class SMSMonitorService extends Service {
         mBuilder.setContentIntent(pendingIntent);
         return mBuilder.build();
     }
-}
 
-class SMSReceiver extends BroadcastReceiver
-{
-    private final String TAG = this.getClass().getSimpleName();
-
-    private final SMSMonitorService smsMonitorService;
-
-    public SMSReceiver(SMSMonitorService smsMonitorService){
-        this.smsMonitorService = smsMonitorService;
-    }
-
-    @Override
-    public void onReceive(Context context, Intent intent)
+    private class SMSReceiver extends BroadcastReceiver
     {
-        Bundle extras = intent.getExtras();
+        private final String TAG = this.getClass().getSimpleName();
 
-        String strMessage = "";
+        private final SMSMonitorService smsMonitorService;
 
-        if ( extras != null )
-        {
-            Object[] smsExtras = (Object[]) extras.get( "pdus" );
-
-            for (Object smsExtra : smsExtras) {
-                SmsMessage msg = SmsMessage.createFromPdu((byte[]) smsExtra);
-
-                String strMsgBody = msg.getMessageBody();
-                String strMsgSrc = msg.getOriginatingAddress();
-
-                strMessage += "SMS from " + strMsgSrc + " : " + strMsgBody;
-
-                Log.d(TAG, strMessage);
-                smsMonitorService.onSMSReceive(strMsgSrc, strMsgBody);
-            }
-
+        public SMSReceiver(SMSMonitorService smsMonitorService){
+            this.smsMonitorService = smsMonitorService;
         }
-        // Do not forward the SMS to other apps
-        this.abortBroadcast();
-    }
 
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            Bundle extras = intent.getExtras();
+
+            String strMessage = "";
+
+            if ( extras != null )
+            {
+                Object[] smsExtras = (Object[]) extras.get( "pdus" );
+
+                for (Object smsExtra : smsExtras) {
+                    SmsMessage msg = SmsMessage.createFromPdu((byte[]) smsExtra);
+
+                    String strMsgBody = msg.getMessageBody();
+                    String strMsgSrc = msg.getOriginatingAddress();
+
+                    strMessage += "SMS from " + strMsgSrc + " : " + strMsgBody;
+
+                    Log.d(TAG, strMessage);
+                    smsMonitorService.onSMSReceive(strMsgSrc, strMsgBody);
+                }
+
+            }
+            // Do not forward the SMS to other apps
+            this.abortBroadcast();
+        }
+
+    }
 }
+
+
