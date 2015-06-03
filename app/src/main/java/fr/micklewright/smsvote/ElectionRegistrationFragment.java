@@ -24,10 +24,9 @@ import fr.micklewright.smsvote.database.Contact;
 import fr.micklewright.smsvote.database.Election;
 import fr.micklewright.smsvote.database.Participation;
 import fr.micklewright.smsvote.database.ParticipationDao;
-import fr.micklewright.smsvote.database.Post;
 
 
-public class RegistrationFragment extends Fragment {
+public class ElectionRegistrationFragment extends Fragment {
 
 
     private Election election;
@@ -37,7 +36,7 @@ public class RegistrationFragment extends Fragment {
     private RegistrationFragmentListener mListener;
     private ContactAdapter adapter;
 
-    public RegistrationFragment() {
+    public ElectionRegistrationFragment() {
     }
 
     @Override

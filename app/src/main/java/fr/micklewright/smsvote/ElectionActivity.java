@@ -13,15 +13,16 @@ import android.view.View;
 
 import fr.micklewright.smsvote.database.Election;
 import fr.micklewright.smsvote.database.ElectionDao;
-import fr.micklewright.smsvote.database.Participation;
 import fr.micklewright.smsvote.database.ParticipationDao;
 
 
 public class ElectionActivity extends AppCompatActivity  implements PostDialogFragment.PostDialogListener,
-        ElectionNameDialog.ElectionNameDialogListener, RegistrationFragment.RegistrationFragmentListener {
+        ElectionNameDialog.ElectionNameDialogListener, ElectionRegistrationFragment.RegistrationFragmentListener,
+        ElectionVoteOverviewFragment.VoteOverviewFragmentListener {
 
     private static final String REGISTRATION_FRAGMENT_TAG = "registrationFragment";
     private static final String SUMMARY_FRAGMENT_TAG = "summaryFragment";
+    private static final String VOTE_OVERVIEW_FRAGMENT_TAG = "voteOverviewFragment";
 
     ElectionDao electionDao;
     ParticipationDao participationDao;
@@ -49,12 +50,12 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
                             .add(R.id.fragment_container_election, electionSummaryFragment, SUMMARY_FRAGMENT_TAG).commit();
                     break;
                 case Election.STAGE_REGISTRATION:
-                    RegistrationFragment registrationFragment = new RegistrationFragment();
+                    ElectionRegistrationFragment electionRegistrationFragment = new ElectionRegistrationFragment();
                     Bundle args = new Bundle();
                     args.putLong("electionId", election.getId());
-                    registrationFragment.setArguments(args);
+                    electionRegistrationFragment.setArguments(args);
                     getSupportFragmentManager().beginTransaction()
-                            .add(R.id.fragment_container_election, registrationFragment, REGISTRATION_FRAGMENT_TAG).commit();
+                            .add(R.id.fragment_container_election, electionRegistrationFragment, REGISTRATION_FRAGMENT_TAG).commit();
                     break;
             }
         }
@@ -91,7 +92,7 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
         election.setStage(Election.STAGE_REGISTRATION);
         election.update();
 
-        RegistrationFragment fragment = new RegistrationFragment();
+        ElectionRegistrationFragment fragment = new ElectionRegistrationFragment();
         Bundle args = new Bundle();
         args.putLong("electionId", election.getId());
         fragment.setArguments(args);
@@ -126,6 +127,26 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
     public void onRegistrationAccept() {
         election.setStage(Election.STAGE_VOTE);
         election.update();
+
+        ElectionVoteOverviewFragment fragment = new ElectionVoteOverviewFragment();
+        Bundle args = new Bundle();
+        args.putLong("electionId", election.getId());
+        fragment.setArguments(args);
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+        transaction.replace(R.id.fragment_container_election, fragment, VOTE_OVERVIEW_FRAGMENT_TAG);
+        transaction.commit();
+    }
+
+    @Override
+    public void onVoteStart(long postId) {
+
+    }
+
+    @Override
+    public void onFinishElection() {
+
     }
 
 
@@ -139,7 +160,7 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(SMSMonitorService.ACTION_REGISTER)){
-                ((RegistrationFragment) getSupportFragmentManager().findFragmentByTag(REGISTRATION_FRAGMENT_TAG))
+                ((ElectionRegistrationFragment) getSupportFragmentManager().findFragmentByTag(REGISTRATION_FRAGMENT_TAG))
                 .refreshView();
             }
         }
