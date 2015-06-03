@@ -4,7 +4,6 @@ package fr.micklewright.smsvote;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
@@ -13,14 +12,18 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import fr.micklewright.smsvote.database.Election;
+import fr.micklewright.smsvote.database.ParticipationDao;
 
 
 public class RegistrationFragment extends Fragment {
 
 
     private Election election;
+
+    private ParticipationDao participationDao;
 
     private RegistrationFragmentListener mListener;
 
@@ -32,8 +35,13 @@ public class RegistrationFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
 
+        participationDao = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession()
+                .getParticipationDao();
         election = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession()
                 .getElectionDao().load(getArguments().getLong("electionId"));
+
+        election.setRegistrationCode((int) (Math.random()*9000)+1000);
+        election.update();
 
         // Start SMSMonitor Service
 
@@ -47,7 +55,11 @@ public class RegistrationFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_registration, container, false);
+        View view = inflater.inflate(R.layout.fragment_registration, container, false);
+
+        ((TextView) view.findViewById(R.id.textView_registrationCode))
+                .setText(String.valueOf(election.getRegistrationCode()));
+        return view;
     }
 
     @Override
@@ -61,10 +73,6 @@ public class RegistrationFragment extends Fragment {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
 
         switch (item.getItemId()){
             case R.id.election_registration_action_cancel:
@@ -97,5 +105,13 @@ public class RegistrationFragment extends Fragment {
     }
 
 
+    public void refreshView(){
+        long count = participationDao.queryBuilder()
+                .where(ParticipationDao.Properties.ElectionId.eq(election.getId()))
+                .count();
+        //noinspection ConstantConditions
+        ((TextView) getView().findViewById(R.id.textView_registeredCount))
+                .setText(String.valueOf(count));
+    }
 
 }

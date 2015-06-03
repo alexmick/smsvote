@@ -11,11 +11,21 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.telephony.SmsMessage;
 import android.util.Log;
 import android.widget.Toast;
 
+import fr.micklewright.smsvote.database.Application;
+import fr.micklewright.smsvote.database.Contact;
+import fr.micklewright.smsvote.database.ContactDao;
+import fr.micklewright.smsvote.database.DaoSession;
 import fr.micklewright.smsvote.database.Election;
+import fr.micklewright.smsvote.database.ElectionDao;
+import fr.micklewright.smsvote.database.Participation;
+import fr.micklewright.smsvote.database.ParticipationDao;
+import fr.micklewright.smsvote.database.Post;
 
 
 /**
@@ -23,15 +33,24 @@ import fr.micklewright.smsvote.database.Election;
  * a service on a separate handler thread.
  */
 public class SMSMonitorService extends Service {
-    private static final int NOTIFICATION_ID = 42;
 
     public static final String ACTION_REGISTER = "fr.micklewright.smsvote.action.register";
-    public static final String ACTION_BAZ = "fr.micklewright.smsvote.action.BAZ";
+    public static final String ACTION_APPLY = "fr.micklewright.smsvote.action.APPLY";
+    public static final String ACTION_VOTE = "fr.micklewright.smsvote.action.VOTE";
 
     public static final String EXTRA_ELECTION_ID = "fr.micklewright.smsvote.extra.electionId";
     public static final String EXTRA_POST_ID = "fr.micklewright.smsvote.extra.postId";
 
-    private Election election;
+    private String action;
+
+    private Election election = null;
+    private Application application = null;
+    private Post post = null;
+
+    private ElectionDao electionDao;
+    private ParticipationDao participationDao;
+    private ContactDao contactDao;
+
     private SMSReceiver smsReceiver;
 
     public SMSMonitorService() {
@@ -44,24 +63,31 @@ public class SMSMonitorService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        super.onStartCommand(intent, flags,startId);
+        super.onStartCommand(intent, flags, startId);
 
-        if (intent != null) {
-            smsReceiver = new SMSReceiver();
-            IntentFilter intentFilter = new IntentFilter();
-            intentFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
-            intentFilter.setPriority(999);
-            registerReceiver(smsReceiver, intentFilter);
+        smsReceiver = new SMSReceiver(this);
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
+        intentFilter.setPriority(Integer.MAX_VALUE);
+        registerReceiver(smsReceiver, intentFilter);
 
+        action = intent.getAction();
 
-            final long electionId = intent.getLongExtra(EXTRA_ELECTION_ID, -1);
-            election = ((DaoApplication) getApplicationContext()).getDaoSession()
-                    .getElectionDao().load(electionId);
-        }
+        final long electionId = intent.getLongExtra(EXTRA_ELECTION_ID, -1);
 
-        startForeground(NOTIFICATION_ID, getNotification());
+        connectDatabase();
+
+        election = electionDao.load(electionId);
+        startForeground(election.getId().intValue(), getNotification());
 
         return START_REDELIVER_INTENT;
+    }
+
+    private void connectDatabase(){
+        DaoSession appSession = ((DaoApplication) getApplicationContext()).getDaoSession();
+        electionDao = appSession.getElectionDao();
+        participationDao = appSession.getParticipationDao();
+        contactDao = appSession.getContactDao();
     }
 
     @Override
@@ -69,6 +95,44 @@ public class SMSMonitorService extends Service {
         unregisterReceiver(smsReceiver);
         super.onDestroy();
     }
+
+    public void onSMSReceive(String from, String body){
+        if (action.equals(ACTION_REGISTER)){
+            // Check the person isn't already registered
+            long found = participationDao.queryBuilder()
+                    .where(
+                            ParticipationDao.Properties.ContactNumber.eq(from),
+                            ParticipationDao.Properties.ElectionId.eq(election.getId())
+                    ).count();
+            if (found > 0){
+                return;
+            }
+
+            //Check that the code is correct
+            if (body.contains(String.valueOf(election.getRegistrationCode()))){
+                Contact sender = contactDao.queryBuilder()
+                        .where(ContactDao.Properties.Number.eq(from))
+                        .unique();
+                if (sender == null){
+                    sender = new Contact(Long.parseLong(from));
+                    contactDao.insert(sender);
+                }
+                Participation participation =
+                        new Participation(sender.getNumber(),election.getId());
+                participationDao.insert(participation);
+
+                Intent localIntent = new Intent(ACTION_REGISTER);
+                // Broadcasts the Intent to receivers in this app.
+                LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+
+            }
+        } else if(action.equals(ACTION_APPLY)){
+
+        }
+
+    }
+
+
 
     private Notification getNotification(){
         NotificationCompat.Builder mBuilder =
@@ -78,8 +142,14 @@ public class SMSMonitorService extends Service {
                         .setContentText("Monitoring incoming SMS");
         Intent intent = new Intent(this, ElectionActivity.class);
         intent.putExtra("electionId", election.getId());
-        PendingIntent resultIntent = PendingIntent.getActivity(this,0,intent,PendingIntent.FLAG_CANCEL_CURRENT);
-        mBuilder.setContentIntent(resultIntent);
+
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        // Adds the back stack for the Intent (but not the Intent itself)
+        stackBuilder.addParentStack(ElectionActivity.class);
+        // Adds the Intent that starts the Activity to the top of the stack
+        stackBuilder.addNextIntent(intent);
+        PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_CANCEL_CURRENT);
+        mBuilder.setContentIntent(pendingIntent);
         return mBuilder.build();
     }
 }
@@ -87,6 +157,12 @@ public class SMSMonitorService extends Service {
 class SMSReceiver extends BroadcastReceiver
 {
     private final String TAG = this.getClass().getSimpleName();
+
+    private final SMSMonitorService smsMonitorService;
+
+    public SMSReceiver(SMSMonitorService smsMonitorService){
+        this.smsMonitorService = smsMonitorService;
+    }
 
     @Override
     public void onReceive(Context context, Intent intent)
@@ -107,8 +183,8 @@ class SMSReceiver extends BroadcastReceiver
 
                 strMessage += "SMS from " + strMsgSrc + " : " + strMsgBody;
 
-                Toast.makeText(context, strMessage, Toast.LENGTH_LONG).show();
                 Log.d(TAG, strMessage);
+                smsMonitorService.onSMSReceive(strMsgSrc, strMsgBody);
             }
 
         }

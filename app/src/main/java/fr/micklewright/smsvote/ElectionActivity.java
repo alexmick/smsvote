@@ -1,13 +1,20 @@
 package fr.micklewright.smsvote;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import fr.micklewright.smsvote.database.Election;
 import fr.micklewright.smsvote.database.ElectionDao;
+import fr.micklewright.smsvote.database.Participation;
+import fr.micklewright.smsvote.database.ParticipationDao;
 
 
 public class ElectionActivity extends AppCompatActivity  implements PostDialogFragment.PostDialogListener,
@@ -17,6 +24,7 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
     private static final String SUMMARY_FRAGMENT_TAG = "summaryFragment";
 
     ElectionDao electionDao;
+    ParticipationDao participationDao;
     Election election;
 
     @Override
@@ -25,7 +33,10 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
         setContentView(R.layout.activity_election);
 
         electionDao = ((DaoApplication) getApplicationContext()).getDaoSession().getElectionDao();
+        participationDao = ((DaoApplication) getApplicationContext()).getDaoSession().getParticipationDao();
         election = electionDao.load(getIntent().getLongExtra("electionId", 0));
+
+
 
         if (findViewById(R.id.fragment_container_election) != null && savedInstanceState == null ) {
             switch (election.getStage()) {
@@ -47,6 +58,11 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
                     break;
             }
         }
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                new SMSMonitorReceiver(),
+                new IntentFilter(SMSMonitorService.ACTION_REGISTER
+                ));
     }
 
     @Override
@@ -67,7 +83,7 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
-        transaction.replace(R.id.fragment_container_election, fragment);
+        transaction.replace(R.id.fragment_container_election, fragment, SUMMARY_FRAGMENT_TAG);
         transaction.commit();
     }
 
@@ -82,13 +98,16 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
-        transaction.replace(R.id.fragment_container_election, fragment);
+        transaction.replace(R.id.fragment_container_election, fragment, REGISTRATION_FRAGMENT_TAG);
         //transaction.addToBackStack(null);
         transaction.commit();
     }
 
     @Override
     public void onRegistrationCancel() {
+        participationDao.queryBuilder()
+                .where(ParticipationDao.Properties.ElectionId.eq(election.getId()))
+                .buildDelete().executeDeleteWithoutDetachingEntities();
         election.setStage(Election.STAGE_INITIAL);
         election.update();
 
@@ -99,7 +118,7 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
-        transaction.replace(R.id.fragment_container_election, fragment);
+        transaction.replace(R.id.fragment_container_election, fragment, SUMMARY_FRAGMENT_TAG);
         transaction.commit();
     }
 
@@ -108,4 +127,22 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
         election.setStage(Election.STAGE_VOTE);
         election.update();
     }
+
+
+    // Broadcast receiver for receiving status updates from the IntentService
+    private class SMSMonitorReceiver extends BroadcastReceiver
+    {
+        // Prevents instantiation
+        private SMSMonitorReceiver() {
+        }
+        // Called when the BroadcastReceiver gets an Intent it's registered to receive
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(SMSMonitorService.ACTION_REGISTER)){
+                ((RegistrationFragment) getSupportFragmentManager().findFragmentByTag(REGISTRATION_FRAGMENT_TAG))
+                .refreshView();
+            }
+        }
+    }
+
 }

@@ -86,8 +86,8 @@ public class HomeActivity extends AppCompatActivity implements ElectionNameDialo
                 DialogFragment dialog = new ElectionNameDialog();
                 dialog.show(getSupportFragmentManager(), "ElectionNameDialogFragment");
                 return true;
-            case R.id.home_action_settings:
-                return true;
+//            case R.id.home_action_settings:
+//                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
