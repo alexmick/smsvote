@@ -2,6 +2,7 @@ package fr.micklewright.smsvote;
 
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -12,10 +13,18 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import fr.micklewright.smsvote.database.Contact;
 import fr.micklewright.smsvote.database.Election;
+import fr.micklewright.smsvote.database.Participation;
 import fr.micklewright.smsvote.database.ParticipationDao;
+import fr.micklewright.smsvote.database.Post;
 
 
 public class RegistrationFragment extends Fragment {
@@ -26,6 +35,7 @@ public class RegistrationFragment extends Fragment {
     private ParticipationDao participationDao;
 
     private RegistrationFragmentListener mListener;
+    private ContactAdapter adapter;
 
     public RegistrationFragment() {
     }
@@ -58,7 +68,15 @@ public class RegistrationFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_registration, container, false);
 
         ((TextView) view.findViewById(R.id.textView_registrationCode))
-                .setText(String.valueOf(election.getRegistrationCode()));
+                .setText(getString(R.string.activity_election_registration_code)
+                        .replace("####", String.valueOf(election.getRegistrationCode())));
+        ((TextView) view.findViewById(R.id.textView_registeredCount))
+                .setText(getString(R.string.activity_election_registration_list_title)
+                        .replace('#', '0'));
+
+
+        adapter = new ContactAdapter(getActivity(), new ArrayList<Contact>());
+        ((ListView) view.findViewById(R.id.listView_registered_contacts)).setAdapter(adapter);
         return view;
     }
 
@@ -106,12 +124,46 @@ public class RegistrationFragment extends Fragment {
 
 
     public void refreshView(){
-        long count = participationDao.queryBuilder()
+        List<Participation> participations = participationDao.queryBuilder()
                 .where(ParticipationDao.Properties.ElectionId.eq(election.getId()))
-                .count();
+                .list();
+        int i=0;
+        adapter.clear();
+        for (Participation participation : participations){
+            i++;
+            adapter.add(participation.getContact());
+        }
+        adapter.notifyDataSetChanged();
         //noinspection ConstantConditions
         ((TextView) getView().findViewById(R.id.textView_registeredCount))
-                .setText(String.valueOf(count));
+                .setText(getString(R.string.activity_election_registration_list_title)
+                        .replace("#", String.valueOf(i)));
     }
 
+}
+
+class ContactAdapter extends ArrayAdapter<Contact> {
+    List<Contact> contacts;
+    Context context;
+
+    public ContactAdapter(Context context, List<Contact> contacts){
+        super(context, android.R.layout.simple_list_item_2, contacts);
+        this.context = context;
+        this.contacts = contacts;
+    }
+
+    @Override
+    public View getView(final int position, View convertView, ViewGroup parent){
+        if(convertView == null){
+            LayoutInflater mLayoutInflater = LayoutInflater.from(context);
+            convertView = mLayoutInflater.inflate(android.R.layout.simple_list_item_2, null);
+        }
+        final Contact contact = contacts.get(position);
+        ((TextView) convertView.findViewById(android.R.id.text1))
+                .setText(contact.getName());
+        ((TextView) convertView.findViewById(android.R.id.text2))
+                .setText(String.valueOf(contact.getNumber()));
+
+        return convertView;
+    }
 }

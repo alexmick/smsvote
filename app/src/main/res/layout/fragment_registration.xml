@@ -8,14 +8,14 @@
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_weight="1"
+        android:layout_weight="4"
         android:orientation="vertical">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Enregistrement des votants en cours..."
+            android:text="@string/activity_election_registration_runningMessage"
             android:layout_alignParentTop="true"
             android:layout_marginTop="5dp"
             android:layout_centerHorizontal="true" />
@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:id="@+id/textView_registrationCode"
-            android:text="1234"
+            android:text="@string/activity_election_registration_code"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="40dp" />
 
@@ -34,15 +34,18 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:id="@+id/textView_registeredCount"
-            android:text="0"
-            android:layout_centerVertical="true"
-            android:layout_centerHorizontal="true" />
+            android:text="@string/activity_election_registration_list_title"
+            android:layout_marginLeft="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
     </RelativeLayout>
 
     <ListView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/listView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/listView_registered_contacts"
         android:layout_weight="1"/>
 
 </LinearLayout>

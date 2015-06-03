@@ -26,4 +26,7 @@
     <string name="activity_election_registration_cancel">Annuler</string>
     <string name="activity_election_registration_confirm">Terminer</string>
     <string name="activity_election_registration_title">Enregistrement</string>
+    <string name="activity_election_registration_list_title">Votants (#):</string>
+    <string name="activity_election_registration_runningMessage">Enregistrement des votants en cours...</string>
+    <string name="activity_election_registration_code">Code à envoyer : ####</string>
 </resources>

@@ -114,7 +114,7 @@ public class SMSMonitorService extends Service {
                         .where(ContactDao.Properties.Number.eq(from))
                         .unique();
                 if (sender == null){
-                    sender = new Contact(Long.parseLong(from));
+                    sender = new Contact(Long.parseLong(from), from);
                     contactDao.insert(sender);
                 }
                 Participation participation =
