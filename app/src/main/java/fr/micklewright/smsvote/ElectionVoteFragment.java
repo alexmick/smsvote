@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,25 +25,23 @@ import fr.micklewright.smsvote.database.Application;
 import fr.micklewright.smsvote.database.ApplicationDao;
 import fr.micklewright.smsvote.database.Contact;
 import fr.micklewright.smsvote.database.Election;
-import fr.micklewright.smsvote.database.Participation;
-import fr.micklewright.smsvote.database.ParticipationDao;
 import fr.micklewright.smsvote.database.Post;
-import fr.micklewright.smsvote.database.Vote;
 import fr.micklewright.smsvote.database.VoteDao;
 
 
-public class ElectionApplicationFragment extends Fragment {
+public class ElectionVoteFragment extends Fragment {
 
 
     private Election election;
     private Post post;
 
     private ApplicationDao applicationDao;
+    private VoteDao voteDao;
 
-    private ApplicationFragmentListener mListener;
+    private VoteFragmentListener mListener;
     private ContactAdapter adapter;
 
-    public ElectionApplicationFragment() {
+    public ElectionVoteFragment() {
     }
 
     @Override
@@ -52,15 +51,18 @@ public class ElectionApplicationFragment extends Fragment {
 
         applicationDao = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession()
                 .getApplicationDao();
+        voteDao = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession()
+                .getVoteDao();
         election = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession()
                 .getElectionDao().load(getArguments().getLong("electionId"));
         post = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession()
                 .getPostDao().load(getArguments().getLong("postId"));
 
+
         // Start SMSMonitor Service
 
         Intent serviceIntent = new Intent(getActivity(), SMSMonitorService.class);
-        serviceIntent.setAction(SMSMonitorService.ACTION_APPLY);
+        serviceIntent.setAction(SMSMonitorService.ACTION_VOTE);
         serviceIntent.putExtra(SMSMonitorService.EXTRA_ELECTION_ID, election.getId());
         serviceIntent.putExtra(SMSMonitorService.EXTRA_POST_ID, post.getId());
         getActivity().startService(serviceIntent);
@@ -70,13 +72,12 @@ public class ElectionApplicationFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_application, container, false);
-        ((TextView) view.findViewById(R.id.textView_registeredCount))
-                .setText(getString(R.string.activity_election_application_list_title)
-                        .replace('#', '0'));
+        View view = inflater.inflate(R.layout.fragment_vote, container, false);
 
-
-        adapter = new ContactAdapter(getActivity(), new ArrayList<Contact>());
+        post.resetApplications();
+        ArrayList<Application> applications = new ArrayList<>();
+        applications.addAll(post.getApplications());
+        adapter = new ContactAdapter(getActivity(), applications);
         ((ListView) view.findViewById(R.id.listView_registered_contacts)).setAdapter(adapter);
         return view;
     }
@@ -85,24 +86,24 @@ public class ElectionApplicationFragment extends Fragment {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         //noinspection ConstantConditions
         ((AppCompatActivity) getActivity()).getSupportActionBar()
-                .setTitle(getString(R.string.activity_election_application_title) + " " + post.getName());
+                .setTitle(getString(R.string.activity_election_vote_title) + " " + post.getName());
         // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_election_application, menu);
+        inflater.inflate(R.menu.menu_election_vote, menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()){
-            case R.id.election_application_action_cancel:
+            case R.id.election_vote_action_cancel:
                 Intent intent = new Intent(getActivity(), SMSMonitorService.class);
                 getActivity().stopService(intent);
-                mListener.onApplicationCancel(post.getId());
+                mListener.onVoteCancel(post.getId());
                 return true;
-            case R.id.election_application_action_confirm:
+            case R.id.election_vote_action_confirm:
                 Intent intent2 = new Intent(getActivity(), SMSMonitorService.class);
                 getActivity().stopService(intent2);
-                mListener.onApplicationAccept(post.getId());
+                mListener.onVoteAccept();
                 return true;
         }
 
@@ -113,44 +114,39 @@ public class ElectionApplicationFragment extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         try {
-            mListener = (ApplicationFragmentListener) activity;
+            mListener = (VoteFragmentListener) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
-                    + " must implement ApplicationFragmentListener");
+                    + " must implement VoteFragmentListener");
         }
     }
 
-    public interface ApplicationFragmentListener{
-        public void onApplicationCancel(long postId);
-        public void onApplicationAccept(long postId);
+    public interface VoteFragmentListener{
+        public void onVoteCancel(long postId);
+        public void onVoteAccept();
     }
 
 
     public void refreshView(){
-        List<Application> applications = applicationDao.queryBuilder()
-                .where(ApplicationDao.Properties.PostId.eq(post.getId()))
-                .list();
-        int i=0;
+        post.resetApplications();
         adapter.clear();
-        for (Application application : applications){
-            i++;
-            adapter.add(application.getContact());
-        }
+        adapter.addAll(post.getApplications());
         adapter.notifyDataSetChanged();
-        //noinspection ConstantConditions
-        ((TextView) getView().findViewById(R.id.textView_registeredCount))
-                .setText(getString(R.string.activity_election_application_list_title)
-                        .replace("#", String.valueOf(i)));
+
+        for (Application application : post.getApplications()){
+            application.resetVotes();
+            Log.w(application.getContact().getName(), String.valueOf(application.getVotes().size()));
+        }
     }
 
-    private class ContactAdapter extends ArrayAdapter<Contact> {
-        List<Contact> contacts;
+    private class ContactAdapter extends ArrayAdapter<Application> {
+        List<Application> applications;
         Context context;
 
-        public ContactAdapter(Context context, List<Contact> contacts){
-            super(context, android.R.layout.simple_list_item_2, contacts);
+        public ContactAdapter(Context context, List<Application> applications){
+            super(context, android.R.layout.simple_list_item_2, applications);
             this.context = context;
-            this.contacts = contacts;
+            this.applications = applications;
         }
 
         @Override
@@ -159,11 +155,13 @@ public class ElectionApplicationFragment extends Fragment {
                 LayoutInflater mLayoutInflater = LayoutInflater.from(context);
                 convertView = mLayoutInflater.inflate(android.R.layout.simple_list_item_2, null);
             }
-            final Contact contact = contacts.get(position);
+            final Application application = applications.get(position);
+            application.resetVotes();
             ((TextView) convertView.findViewById(android.R.id.text1))
-                    .setText(contact.getName());
+                    .setText(application.getCandidateNumber() +": "+application.getContact().getName());
+
             ((TextView) convertView.findViewById(android.R.id.text2))
-                    .setText(String.valueOf(contact.getNumber()));
+            .setText(String.valueOf(application.getVotes().size()));
 
             return convertView;
         }

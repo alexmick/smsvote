@@ -30,6 +30,8 @@ import fr.micklewright.smsvote.database.Participation;
 import fr.micklewright.smsvote.database.ParticipationDao;
 import fr.micklewright.smsvote.database.Post;
 import fr.micklewright.smsvote.database.PostDao;
+import fr.micklewright.smsvote.database.Vote;
+import fr.micklewright.smsvote.database.VoteDao;
 
 
 /**
@@ -55,6 +57,7 @@ public class SMSMonitorService extends Service {
     private ApplicationDao applicationDao;
     private ContactDao contactDao;
     private PostDao postDao;
+    private VoteDao voteDao;
 
     private SMSReceiver smsReceiver;
 
@@ -100,6 +103,7 @@ public class SMSMonitorService extends Service {
         contactDao = appSession.getContactDao();
         applicationDao = appSession.getApplicationDao();
         postDao = appSession.getPostDao();
+        voteDao = appSession.getVoteDao();
     }
 
     @Override
@@ -185,6 +189,52 @@ public class SMSMonitorService extends Service {
             // Broadcasts the Intent to receivers in this app.
             LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
 
+        } else if (action.equals(ACTION_VOTE)){
+            Contact sender = contactDao.queryBuilder()
+                    .where(ContactDao.Properties.Number.eq(from))
+                    .unique();
+            if (sender == null){
+                return;
+            }
+
+            // Check the person can participate in this election
+            long participates = participationDao.queryBuilder()
+                    .where(
+                            ParticipationDao.Properties.ContactNumber.eq(sender.getNumber()),
+                            ParticipationDao.Properties.ElectionId.eq(election.getId())
+                    ).count();
+            if (participates == 0) {
+                return;
+            }
+
+            // Check the person hasn't voted more than the posts places
+            List<Vote> votes = voteDao.queryBuilder()
+                    .where(
+                            VoteDao.Properties.ContactNumber.eq(sender.getNumber())
+                    ).list();
+            int count = 0;
+            for (Vote vote : votes){
+                if (post.getId().equals(vote.getApplication().getPostId()))
+                    count++;
+            }
+            if (count >= post.getPlaces()) {
+                return;
+            }
+
+            Vote vote = new Vote();
+            vote.setContact(sender);
+            String id = body.substring(0,1);
+            for (Application application : post.getApplications()){
+                if (id.equals(application.getCandidateNumber().toString())) {
+                    vote.setApplication(application);
+                    voteDao.insert(vote);
+
+                    Intent localIntent = new Intent(ACTION_VOTE);
+                    // Broadcasts the Intent to receivers in this app.
+                    LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+                    return;
+                }
+            }
         }
 
     }

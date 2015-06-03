@@ -98,6 +98,8 @@ public class ElectionRegistrationFragment extends Fragment {
                 mListener.onRegistrationCancel();
                 return true;
             case R.id.election_registration_action_confirm:
+                Intent intent2 = new Intent(getActivity(), SMSMonitorService.class);
+                getActivity().stopService(intent2);
                 mListener.onRegistrationAccept();
                 return true;
         }

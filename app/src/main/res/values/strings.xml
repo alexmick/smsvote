@@ -27,7 +27,7 @@
     <string name="activity_election_registration_confirm">Terminer</string>
     <string name="activity_election_registration_title">Enregistrement</string>
     <string name="activity_election_registration_list_title">Votants (#):</string>
-    <string name="activity_election_registration_runningMessage">Enregistrement des votants en cours...</string>
+    <string name="activity_election_registration_runningMessage">Enregistrement des votants en cours…</string>
     <string name="activity_election_registration_code">Code à envoyer : ####</string>
 
     <!-- Election voteOverview fragment -->
@@ -37,6 +37,11 @@
 
     <!-- Election application fragment -->
     <string name="activity_election_application_list_title">Candidats (#):</string>
-    <string name="activity_election_application_runningMessage">Enregistrement des candidats en cours...</string>
+    <string name="activity_election_application_runningMessage">Enregistrement des candidats en cours…</string>
     <string name="activity_election_application_title">Candidatures pour</string>
+
+    <!-- Election cote fragment -->
+    <string name="activity_election_vote_title">Vote:</string>
+    <string name="activity_election_vote_runningMessage">Enregistrement des votes en cours...</string>
+    <string name="activity_election_vote_list_title">Candidats</string>
 </resources>
