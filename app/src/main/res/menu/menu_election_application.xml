@@ -1,0 +1,11 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="fr.micklewright.smsvote.ElectionActivity">
+    <item android:id="@+id/election_application_action_cancel"
+        android:title="@string/activity_election_registration_cancel"
+        android:orderInCategory="100" app:showAsAction="ifRoom" />
+    <item android:id="@+id/election_application_action_confirm"
+        android:title="@string/activity_election_registration_confirm"
+        android:orderInCategory="101" app:showAsAction="ifRoom" />
+</menu>

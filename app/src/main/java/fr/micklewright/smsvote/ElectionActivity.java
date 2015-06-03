@@ -11,21 +11,27 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
+import fr.micklewright.smsvote.database.ApplicationDao;
 import fr.micklewright.smsvote.database.Election;
 import fr.micklewright.smsvote.database.ElectionDao;
 import fr.micklewright.smsvote.database.ParticipationDao;
+import fr.micklewright.smsvote.database.Post;
+import fr.micklewright.smsvote.database.PostDao;
 
 
 public class ElectionActivity extends AppCompatActivity  implements PostDialogFragment.PostDialogListener,
         ElectionNameDialog.ElectionNameDialogListener, ElectionRegistrationFragment.RegistrationFragmentListener,
-        ElectionVoteOverviewFragment.VoteOverviewFragmentListener {
+        ElectionVoteOverviewFragment.VoteOverviewFragmentListener, ElectionApplicationFragment.ApplicationFragmentListener {
 
     private static final String REGISTRATION_FRAGMENT_TAG = "registrationFragment";
     private static final String SUMMARY_FRAGMENT_TAG = "summaryFragment";
     private static final String VOTE_OVERVIEW_FRAGMENT_TAG = "voteOverviewFragment";
+    private static final String APPLICATION_FRAGMENT_TAG = "applicationFragment";
 
     ElectionDao electionDao;
     ParticipationDao participationDao;
+    ApplicationDao applicationDao;
+    PostDao postDao;
     Election election;
 
     @Override
@@ -35,6 +41,8 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
 
         electionDao = ((DaoApplication) getApplicationContext()).getDaoSession().getElectionDao();
         participationDao = ((DaoApplication) getApplicationContext()).getDaoSession().getParticipationDao();
+        applicationDao = ((DaoApplication) getApplicationContext()).getDaoSession().getApplicationDao();
+        postDao = ((DaoApplication) getApplicationContext()).getDaoSession().getPostDao();
         election = electionDao.load(getIntent().getLongExtra("electionId", 0));
 
 
@@ -42,7 +50,6 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
         if (findViewById(R.id.fragment_container_election) != null && savedInstanceState == null ) {
             switch (election.getStage()) {
                 case Election.STAGE_INITIAL:
-                case Election.STAGE_VOTE:
                     ElectionSummaryFragment electionSummaryFragment = new ElectionSummaryFragment();
                     electionSummaryFragment.setArguments(getIntent().getExtras());
 
@@ -57,12 +64,25 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
                     getSupportFragmentManager().beginTransaction()
                             .add(R.id.fragment_container_election, electionRegistrationFragment, REGISTRATION_FRAGMENT_TAG).commit();
                     break;
+                case Election.STAGE_VOTE:
+                    ElectionVoteOverviewFragment electionVoteOverviewFragment = new ElectionVoteOverviewFragment();
+                    Bundle args2 = new Bundle();
+                    args2.putLong("electionId", election.getId());
+                    electionVoteOverviewFragment.setArguments(args2);
+                    getSupportFragmentManager().beginTransaction()
+                            .add(R.id.fragment_container_election, electionVoteOverviewFragment, VOTE_OVERVIEW_FRAGMENT_TAG).commit();
+                    break;
             }
         }
 
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 new SMSMonitorReceiver(),
                 new IntentFilter(SMSMonitorService.ACTION_REGISTER
+                ));
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                new SMSMonitorReceiver(),
+                new IntentFilter(SMSMonitorService.ACTION_APPLY
                 ));
     }
 
@@ -141,11 +161,43 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
 
     @Override
     public void onVoteStart(long postId) {
+        Post post = postDao.load(postId);
+        ElectionApplicationFragment fragment = new ElectionApplicationFragment();
+        Bundle args = new Bundle();
+        args.putLong("electionId", election.getId());
+        args.putLong("postId", post.getId());
+        fragment.setArguments(args);
 
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+        transaction.replace(R.id.fragment_container_election, fragment, APPLICATION_FRAGMENT_TAG);
+        transaction.commit();
     }
 
     @Override
     public void onFinishElection() {
+
+    }
+
+    @Override
+    public void onApplicationCancel(long postId) {
+        applicationDao.queryBuilder()
+                .where(ApplicationDao.Properties.PostId.eq(postId))
+                .buildDelete().executeDeleteWithoutDetachingEntities();
+
+        ElectionVoteOverviewFragment fragment = new ElectionVoteOverviewFragment();
+        Bundle args = new Bundle();
+        args.putLong("electionId", election.getId());
+        fragment.setArguments(args);
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+        transaction.replace(R.id.fragment_container_election, fragment, VOTE_OVERVIEW_FRAGMENT_TAG);
+        transaction.commit();
+    }
+
+    @Override
+    public void onApplicationAccept() {
 
     }
 
@@ -162,6 +214,9 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
             if (intent.getAction().equals(SMSMonitorService.ACTION_REGISTER)){
                 ((ElectionRegistrationFragment) getSupportFragmentManager().findFragmentByTag(REGISTRATION_FRAGMENT_TAG))
                 .refreshView();
+            } else if (intent.getAction().equals(SMSMonitorService.ACTION_APPLY)){
+                ((ElectionApplicationFragment) getSupportFragmentManager().findFragmentByTag(APPLICATION_FRAGMENT_TAG))
+                        .refreshView();
             }
         }
     }

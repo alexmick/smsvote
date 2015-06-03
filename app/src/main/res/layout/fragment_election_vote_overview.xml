@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="fr.micklewright.smsvote.ElectionSummaryFragment">
+    tools:context="fr.micklewright.smsvote.ElectionVoteOverviewFragmentFragment">
 
     <RelativeLayout
         android:layout_width="fill_parent"

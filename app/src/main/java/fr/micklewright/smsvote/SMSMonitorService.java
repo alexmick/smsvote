@@ -17,7 +17,10 @@ import android.telephony.SmsMessage;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.util.List;
+
 import fr.micklewright.smsvote.database.Application;
+import fr.micklewright.smsvote.database.ApplicationDao;
 import fr.micklewright.smsvote.database.Contact;
 import fr.micklewright.smsvote.database.ContactDao;
 import fr.micklewright.smsvote.database.DaoSession;
@@ -26,6 +29,7 @@ import fr.micklewright.smsvote.database.ElectionDao;
 import fr.micklewright.smsvote.database.Participation;
 import fr.micklewright.smsvote.database.ParticipationDao;
 import fr.micklewright.smsvote.database.Post;
+import fr.micklewright.smsvote.database.PostDao;
 
 
 /**
@@ -44,12 +48,13 @@ public class SMSMonitorService extends Service {
     private String action;
 
     private Election election = null;
-    private Application application = null;
     private Post post = null;
 
     private ElectionDao electionDao;
     private ParticipationDao participationDao;
+    private ApplicationDao applicationDao;
     private ContactDao contactDao;
+    private PostDao postDao;
 
     private SMSReceiver smsReceiver;
 
@@ -74,11 +79,16 @@ public class SMSMonitorService extends Service {
         action = intent.getAction();
 
         final long electionId = intent.getLongExtra(EXTRA_ELECTION_ID, -1);
+        final long postId = intent.getLongExtra(EXTRA_POST_ID, -1);
 
         connectDatabase();
 
         election = electionDao.load(electionId);
         startForeground(election.getId().intValue(), getNotification());
+
+        if( postId != -1 ){
+            post = postDao.load(postId);
+        }
 
         return START_REDELIVER_INTENT;
     }
@@ -88,6 +98,8 @@ public class SMSMonitorService extends Service {
         electionDao = appSession.getElectionDao();
         participationDao = appSession.getParticipationDao();
         contactDao = appSession.getContactDao();
+        applicationDao = appSession.getApplicationDao();
+        postDao = appSession.getPostDao();
     }
 
     @Override
@@ -127,6 +139,51 @@ public class SMSMonitorService extends Service {
 
             }
         } else if(action.equals(ACTION_APPLY)){
+            Contact sender = contactDao.queryBuilder()
+                    .where(ContactDao.Properties.Number.eq(from))
+                    .unique();
+            if (sender == null){
+                return;
+            }
+
+            // Check the person can participate in this election
+            long participates = participationDao.queryBuilder()
+                    .where(
+                            ParticipationDao.Properties.ContactNumber.eq(sender.getNumber()),
+                            ParticipationDao.Properties.ElectionId.eq(election.getId())
+                    ).count();
+            if (participates == 0) {
+                return;
+            }
+
+            List<Application> applications = applicationDao.queryBuilder()
+                    .where(
+                            ApplicationDao.Properties.PostId.eq(post.getId())
+                    ).orderAsc(ApplicationDao.Properties.ApplicantId)
+                    .list();
+            for (Application test : applications){
+                if (test.getContact().getNumber().equals(sender.getNumber())) {
+                    return;
+                }
+            }
+
+            int lastNumber;
+            if (applications.size() == 0){
+                lastNumber = 0;
+            } else {
+                lastNumber = applications.get(applications.size()-1).getCandidateNumber();
+            }
+
+            Application application = new Application();
+            application.setPost(post);
+            application.setContact(sender);
+            application.setCandidateNumber(lastNumber + 1);
+
+            applicationDao.insertOrReplace(application);
+
+            Intent localIntent = new Intent(ACTION_APPLY);
+            // Broadcasts the Intent to receivers in this app.
+            LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
 
         }
 

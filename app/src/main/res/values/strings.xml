@@ -29,7 +29,14 @@
     <string name="activity_election_registration_list_title">Votants (#):</string>
     <string name="activity_election_registration_runningMessage">Enregistrement des votants en cours...</string>
     <string name="activity_election_registration_code">Code à envoyer : ####</string>
+
+    <!-- Election voteOverview fragment -->
     <string name="activity_election_finish">Terminer l\'élection</string>
     <string name="activity_election_voteOverview_title">Vote</string>
     <string name="activity_election_voteOverview_hint">Cliquer sur un poste pour lancer le vote</string>
+
+    <!-- Election application fragment -->
+    <string name="activity_election_application_list_title">Candidats (#):</string>
+    <string name="activity_election_application_runningMessage">Enregistrement des candidats en cours...</string>
+    <string name="activity_election_application_title">Candidatures pour</string>
 </resources>
