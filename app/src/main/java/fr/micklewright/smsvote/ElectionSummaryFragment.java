@@ -45,8 +45,8 @@ public class ElectionSummaryFragment extends Fragment{
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
 
-        electionDao = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession().getElectionDao();
-        postDao = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession().getPostDao();
+        electionDao = ((DaoSessionApplication) getActivity().getApplicationContext()).getDaoSession().getElectionDao();
+        postDao = ((DaoSessionApplication) getActivity().getApplicationContext()).getDaoSession().getPostDao();
 
         election = electionDao.load(getArguments().getLong("electionId"));
 

@@ -14,7 +14,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,7 +22,6 @@ import java.util.Locale;
 
 import fr.micklewright.smsvote.database.Election;
 import fr.micklewright.smsvote.database.ElectionDao;
-import fr.micklewright.smsvote.database.Post;
 
 
 public class HomeActivity extends AppCompatActivity implements ElectionNameDialog.ElectionNameDialogListener {
@@ -37,7 +35,7 @@ public class HomeActivity extends AppCompatActivity implements ElectionNameDialo
         setContentView(R.layout.activity_home);
 
         ListView listView = (ListView) findViewById(R.id.listView_election);
-        electionDao = ((DaoApplication) getApplicationContext()).getDaoSession().getElectionDao();
+        electionDao = ((DaoSessionApplication) getApplicationContext()).getDaoSession().getElectionDao();
         List<Election> elections = electionDao.queryBuilder().list();
         adapter = new ElectionAdapter(this, elections);
         listView.setAdapter(adapter);
@@ -87,8 +85,8 @@ public class HomeActivity extends AppCompatActivity implements ElectionNameDialo
                 dialog.show(getSupportFragmentManager(), "ElectionNameDialogFragment");
                 return true;
             case R.id.home_action_settings:
-                ((DaoApplication) getApplicationContext()).getDaoSession().getParticipationDao().queryBuilder().buildDelete().executeDeleteWithoutDetachingEntities();
-                ((DaoApplication) getApplicationContext()).getDaoSession().getContactDao().queryBuilder().buildDelete().executeDeleteWithoutDetachingEntities();
+                ((DaoSessionApplication) getApplicationContext()).getDaoSession().getParticipationDao().queryBuilder().buildDelete().executeDeleteWithoutDetachingEntities();
+                ((DaoSessionApplication) getApplicationContext()).getDaoSession().getContactDao().queryBuilder().buildDelete().executeDeleteWithoutDetachingEntities();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

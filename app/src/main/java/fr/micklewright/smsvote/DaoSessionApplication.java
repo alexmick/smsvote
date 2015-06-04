@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import fr.micklewright.smsvote.database.DaoMaster;
 import fr.micklewright.smsvote.database.DaoSession;
 
-public class DaoApplication extends Application {
+public class DaoSessionApplication extends Application {
     public DaoSession daoSession;
 
     @Override

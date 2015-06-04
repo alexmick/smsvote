@@ -15,7 +15,6 @@ import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.telephony.SmsMessage;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.util.List;
 
@@ -97,7 +96,7 @@ public class SMSMonitorService extends Service {
     }
 
     private void connectDatabase(){
-        DaoSession appSession = ((DaoApplication) getApplicationContext()).getDaoSession();
+        DaoSession appSession = ((DaoSessionApplication) getApplicationContext()).getDaoSession();
         electionDao = appSession.getElectionDao();
         participationDao = appSession.getParticipationDao();
         contactDao = appSession.getContactDao();

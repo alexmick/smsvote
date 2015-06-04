@@ -24,11 +24,7 @@ import fr.micklewright.smsvote.database.Application;
 import fr.micklewright.smsvote.database.ApplicationDao;
 import fr.micklewright.smsvote.database.Contact;
 import fr.micklewright.smsvote.database.Election;
-import fr.micklewright.smsvote.database.Participation;
-import fr.micklewright.smsvote.database.ParticipationDao;
 import fr.micklewright.smsvote.database.Post;
-import fr.micklewright.smsvote.database.Vote;
-import fr.micklewright.smsvote.database.VoteDao;
 
 
 public class ElectionApplicationFragment extends Fragment {
@@ -50,11 +46,11 @@ public class ElectionApplicationFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
 
-        applicationDao = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession()
+        applicationDao = ((DaoSessionApplication) getActivity().getApplicationContext()).getDaoSession()
                 .getApplicationDao();
-        election = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession()
+        election = ((DaoSessionApplication) getActivity().getApplicationContext()).getDaoSession()
                 .getElectionDao().load(getArguments().getLong("electionId"));
-        post = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession()
+        post = ((DaoSessionApplication) getActivity().getApplicationContext()).getDaoSession()
                 .getPostDao().load(getArguments().getLong("postId"));
 
         // Start SMSMonitor Service

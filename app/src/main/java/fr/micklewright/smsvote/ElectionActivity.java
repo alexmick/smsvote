@@ -43,10 +43,10 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_election);
 
-        electionDao = ((DaoApplication) getApplicationContext()).getDaoSession().getElectionDao();
-        participationDao = ((DaoApplication) getApplicationContext()).getDaoSession().getParticipationDao();
-        applicationDao = ((DaoApplication) getApplicationContext()).getDaoSession().getApplicationDao();
-        postDao = ((DaoApplication) getApplicationContext()).getDaoSession().getPostDao();
+        electionDao = ((DaoSessionApplication) getApplicationContext()).getDaoSession().getElectionDao();
+        participationDao = ((DaoSessionApplication) getApplicationContext()).getDaoSession().getParticipationDao();
+        applicationDao = ((DaoSessionApplication) getApplicationContext()).getDaoSession().getApplicationDao();
+        postDao = ((DaoSessionApplication) getApplicationContext()).getDaoSession().getPostDao();
         election = electionDao.load(getIntent().getLongExtra("electionId", 0));
 
 
@@ -221,7 +221,7 @@ public class ElectionActivity extends AppCompatActivity  implements PostDialogFr
 
     @Override
     public void onVoteCancel(long postId) {
-        VoteDao voteDao = ((DaoApplication) getApplicationContext()).getDaoSession().getVoteDao();
+        VoteDao voteDao = ((DaoSessionApplication) getApplicationContext()).getDaoSession().getVoteDao();
         Post post = postDao.load(postId);
         for (Application application : post.getApplications()){
             voteDao.queryBuilder().where(VoteDao.Properties.ApplicationId.eq(application.getId()))

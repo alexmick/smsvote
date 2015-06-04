@@ -44,9 +44,9 @@ public class ElectionRegistrationFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
 
-        participationDao = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession()
+        participationDao = ((DaoSessionApplication) getActivity().getApplicationContext()).getDaoSession()
                 .getParticipationDao();
-        election = ((DaoApplication) getActivity().getApplicationContext()).getDaoSession()
+        election = ((DaoSessionApplication) getActivity().getApplicationContext()).getDaoSession()
                 .getElectionDao().load(getArguments().getLong("electionId"));
 
         election.setRegistrationCode((int) (Math.random()*9000)+1000);
